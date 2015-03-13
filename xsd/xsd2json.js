@@ -144,7 +144,15 @@ function SchemaManager(originatingXsdName, options) {
 	this.globalNamespaces = $.extend({}, options.globalNamespaces, {
 		"xml" : "http://www.w3.org/XML/1998/namespace",
 		"xmlns" : "http://www.w3.org/2000/xmlns/",
-		"html" : "http://www.w3.org/1999/xhtml/"
+		"html" : "http://www.w3.org/1999/xhtml/",
+        "gml" : "http://www.opengis.net/gml",
+    "gco": "http://www.isotc211.org/2005/gco",
+    "gmd": "http://www.isotc211.org/2005/gmd",
+    "gss": "http://www.isotc211.org/2005/gss",
+    "gsr": "http://www.isotc211.org/2005/gsr",
+"xlink": "http://www.w3.org/1999/xlink",
+    "gsr": "http://www.isotc211.org/2005/gsr",
+    "gts": "http://www.isotc211.org/2005/gts"
 	});
 	
 	$.each(this.globalNamespaces, function(prefix, namespaceUri) {
@@ -181,7 +189,7 @@ SchemaManager.prototype.importAjax = function(url, callback, failedLocalAttempt)
 		async: false,
 		success: function(data){
 			var xsdDocument = $.parseXML(data).documentElement;
-			callback.call(self, xsdDocument, url);
+			setTimeout(callback.call(self, xsdDocument, url), 1);
 		}, error: function() {
 			if (!isHttpRequest || failedLocalAttempt)
 				throw new Error("Unable to import " + url);
@@ -268,6 +276,13 @@ SchemaManager.prototype.includeSchema = function(schemaLocation, namespaceIndex)
 	if (namespaceIndex in this.includes) {
 		if ($.inArray(schemaLocation, this.includes[namespaceIndex]) != -1)
 			return;
+        inc = this.includes[namespaceIndex];
+
+        for (var i = 0; i < inc.length; i++) {
+            if (inc[i].slice(inc[i].lastIndexOf("..")) === schemaLocation.slice(schemaLocation.lastIndexOf(".."))){
+                return
+            }          
+        }
 		this.includes[namespaceIndex].push(schemaLocation);
 	} else {
 		// Register schema to includes list for duplicate/circular reference detection
@@ -438,7 +453,23 @@ SchemaManager.prototype.resolveDefinition = function(indexedName) {
 	var schemaSet = this.imports[this.getNamespaceUri(index)];
 	for (var index in schemaSet) {
 		var schema = schemaSet[index];
-		
+/*
+        if (indexedName === "7:AbstractGML"){
+            indexedName = "3:AbstractGML";
+        }
+        if (indexedName === "7:AbstractObject"){
+            indexedName = "3:AbstractObject";
+        }
+        if (indexedName === "7:NilReasonType"){
+            indexedName = "3:NilReasonType"
+        }
+        if (indexedName === "7:AbstractTimePrimitive"){
+            indexedName = "3:AbstractTimePrimitive"
+        }
+        if (indexedName === "7:AbstractTimeObject"){
+            indexedName = "3:AbstractTimeObject";
+        }
+*/
 		//Check for cached version of the definition
 		if (indexedName in schema.rootDefinitions){
 			var definition = schema.rootDefinitions[indexedName];
@@ -714,7 +745,12 @@ SchemaProcessor.prototype.buildTopLevel = function(node) {
 };
 
 SchemaProcessor.prototype.build = function(node, definition, parentDef) {
-	return this["build_" + node.localName](node, definition, parentDef);
+    if (!node){
+        debugger;
+    }
+    else {
+	    return this["build_" + node.localName](node, definition, parentDef);
+    }
 };
 
 // Build an element definition
@@ -1068,7 +1104,16 @@ SchemaProcessor.prototype.extractName = function(name) {
 	var index = name.indexOf(':');
 	if (index == -1) {
 		result['localName'] = name;
-		result['prefix'] = "";
+
+        if (this.targetNS.indexOf("gml") !== -1){
+            result['prefix'] = "gml";
+        }
+        else if (this.targetNS && this.targetNS.indexOf("http://www.isotc211.org/2005/") !== -1){
+            result['prefix'] = this.targetNS.slice(this.targetNS.lastIndexOf("/") + 1);
+        }
+        else {
+            result['prefix'] = "";
+        }
 	} else {
 		result['localName'] = name.substring(index + 1);
 		result['prefix'] = name.substring(0, index);
