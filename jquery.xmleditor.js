@@ -2265,7 +2265,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 		this.menuColumn.css({
 			position : 'fixed',
 			left : xmlEditorContainer.offset().left + xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
-			top : 0
+			top : 50
 		});
 		this.editor.editorHeaderGroup.css({
 			position : 'fixed',
@@ -2275,7 +2275,7 @@ ModifyMenuPanel.prototype.setMenuPosition = function(){
 		this.menuColumn.css({
 			position : 'absolute',
 			left : xmlEditorContainer.outerWidth() - this.menuColumn.innerWidth(),
-			top : 0
+			top : 50
 		});
 		this.editor.editorHeaderGroup.css({
 			position : 'absolute',
